@@ -81,7 +81,7 @@ app.use(express.static('../node_modules/gentelella/production/vendors/'));
 var uri = config.mongoURI[process.env.NODE_ENV];
 //console.log(uri);
 app.set('dbUrl', uri);
-mongoose.connect(app.get('dbUrl'));
+mongoose.connect(app.get('dbUrl'), { useMongoClient: true });
 
 
 // *** main routes *** //

@@ -3,6 +3,8 @@ var express = require('express');
 var Second = require('../models/second');
 var TSData = require('../models/index');
 var Sensor = require('../models/sensor');
+var twilio = require('twilio');
+var client = new twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH);
 var router = express.Router();
 
 
@@ -79,6 +81,8 @@ router.get('/data', function(req, res){
 
 });
 ///*
+var wasOnAlready = true;
+var lastMessageTime = 0;
 router.post('/data', function(req, res, next){
     //pass in sensor information
     //find sensor or create one
@@ -86,13 +90,13 @@ router.post('/data', function(req, res, next){
     /*
     Request body format
     {
-	"temp": {
+	"data": {
 		"analytics": {
 			"metric": 80
 		},
 		"info": {
 			"project": "BioLab",
-			"sensorType": "Temperature(F)",
+			"sensorType": "Temperature",
 			"number": "1"
 		}
 	}
@@ -105,6 +109,34 @@ router.post('/data', function(req, res, next){
         sensorType: tempSecond.info.sensorType,
         info:  tempSecond.info
     });
+    console.log("LEVEL 2");
+    if( ( ((Date.now() - lastMessageTime)/1000 > 3600) && tempData.sensorType == "Temperature" &&  (tempSecond.analytics.metric > 28.0 || tempSecond.analytics.metric < 23.0))
+        || (  tempData.sensorType == "Light" &&  ( (tempSecond.analytics.metric > 1000 && wasOnAlready) || (tempSecond.analytics.metric <= 1000 && !wasOnAlready )  ))   ){
+        if(tempData.sensorType == "Temperature"){
+            lastMessageTime = Date.now();
+            //message Temperature level   Moez: +17174971251‬
+            let x = client.messages.create({
+                body: 'Temperature for the BioLab is at ' + tempSecond.analytics.metric + '°C!',
+                to: '+15105799664‬',  // Text this number
+                from: '+15108769409' // From a valid Twilio number
+            }).then((message) => console.dir(message));
+
+        }else{
+            //if >1000 then its off... so false
+            wasOnAlready = !(tempSecond.analytics.metric > 1000);
+            var lights = wasOnAlready? 'on!':'off!';
+            //message that lights switched
+            let x = client.messages.create({
+                body: 'BioLab lights are now ' + lights,
+                to: '+15105799664',  // Text this number
+                from: '+15108769409' // From a valid Twilio number
+            })
+                .then((message) => console.log("WE IN HERE" + JSON.stringify(message)));
+        }
+    }
+    console.log("LEVEL 3");
+
+
     console.log(JSON.stringify(tempData));
     Sensor.findOne({name: tempData.name}, function (err, sensor){
         if(err){
