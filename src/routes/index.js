@@ -110,7 +110,9 @@ router.post('/data', function(req, res, next){
         info:  tempSecond.info
     });
     console.log("LEVEL 2");
-    if( ( ((Date.now() - lastMessageTime)/1000 > 3600) && tempData.sensorType == "Temperature" &&  (tempSecond.analytics.metric > 28.0 || tempSecond.analytics.metric < 23.0))
+    // will only send one Temperature issue per hour, and only sends a light message when it's changed from on to off or vice versa
+    // temperature bounds are 22 C and 28 C
+    if( ( ((Date.now() - lastMessageTime)/1000 > 3600) && tempData.sensorType == "Temperature" &&  (tempSecond.analytics.metric > 28.0 || tempSecond.analytics.metric < 22.0))
         || (  tempData.sensorType == "Light" &&  ( (tempSecond.analytics.metric > 1000 && wasOnAlready) || (tempSecond.analytics.metric <= 1000 && !wasOnAlready )  ))   ){
         if(tempData.sensorType == "Temperature"){
             lastMessageTime = Date.now();
