@@ -74,7 +74,7 @@ app.use(passport.session());
 app.use(express.static(path.join(__dirname, '../', '/node_modules/gentelella/')));
 //app.use(express.static('../node_modules/gentelella/'));
 app.use('/images', express.static(path.join(__dirname, '../', '/node_modules/gentelella/production/images/')));
-app.use(express.static('../node_modules/gentelella/production/vendors/'));
+app.use(express.static('../node_modules/gentelella/production/'));
 
 
 // *** mongo *** //

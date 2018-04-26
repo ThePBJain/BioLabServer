@@ -6,7 +6,7 @@ var Sensor = require('../models/sensor');
 var twilio = require('twilio');
 var client = new twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH);
 var router = express.Router();
-
+var User = require('../models/user');
 
 router.get('/', function(req, res, next) {
   res.render('index', {
@@ -115,23 +115,52 @@ router.post('/data', function(req, res, next){
         if(tempData.sensorType == "Temperature"){
             lastMessageTime = Date.now();
             //message Temperature level   Moez: +17174971251‬
-            let x = client.messages.create({
-                body: 'Temperature for the BioLab is at ' + tempSecond.analytics.metric + '°C!',
-                to: '+15105799664‬',  // Text this number
-                from: '+15108769409' // From a valid Twilio number
-            }).then((message) => console.dir(message));
+            User.find({ }, { "phoneNum": 1,"_id": 0 }, function(err, data) {
+                if (err) {
+                    res.status(500)
+                        .json({
+                            status: 'err',
+                            data: err,
+                            message: 'An error occured.'
+                        });
+                }else{
+                    for(var i=0; i < data.length; i++){
+                        let userNum = data[i].phoneNum;
+                        let x = client.messages.create({
+                            body: 'Temperature for the BioLab is at ' + tempSecond.analytics.metric + '°C!',
+                            to: userNum,  // Text this number
+                            from: '+15108769409' // From a valid Twilio number
+                        }).then((message) => console.dir(message));
+                    }
+
+                }
+            });
 
         }else{
             //if >1000 then its off... so false
             wasOnAlready = !(tempSecond.analytics.metric > 1000);
             var lights = wasOnAlready? 'on!':'off!';
             //message that lights switched
-            let x = client.messages.create({
-                body: 'BioLab lights are now ' + lights,
-                to: '+15105799664',  // Text this number
-                from: '+15108769409' // From a valid Twilio number
-            })
-                .then((message) => console.log("WE IN HERE" + JSON.stringify(message)));
+            User.find({ }, { "phoneNum": 1,"_id": 0 }, function(err, data) {
+                if (err) {
+                    res.status(500)
+                        .json({
+                            status: 'err',
+                            data: err,
+                            message: 'An error occured.'
+                        });
+                }else{
+                    for(var i=0; i < data.length; i++){
+                        let userNum = data[i].phoneNum;
+                        let x = client.messages.create({
+                            body: 'BioLab lights are now ' + lights,
+                            to: userNum,  // Text this number
+                            from: '+15108769409' // From a valid Twilio number
+                        }).then((message) => console.dir(message));
+                    }
+
+                }
+            });
         }
     }
     console.log("LEVEL 3");

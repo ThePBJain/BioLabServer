@@ -24,7 +24,7 @@ module.exports = exports = function timeSeriesPlugin (schema, options) {
     count: { type: Number },
     key: {},
     data: {}
-  })
+  });
 
   // Set up time-series document's middleware
   TimeSeriesSchema.post('find', function (results, next) {

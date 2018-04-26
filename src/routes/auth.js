@@ -20,7 +20,8 @@ function generateToken(user) {
 }
 
 router.get('/register', function(req, res, next){
-  res.render('register', {
+    console.log("in register #signup");
+  res.render('login', {
     user: req.user,
     message: req.flash('message')[0]
   });
@@ -29,6 +30,8 @@ router.get('/register', function(req, res, next){
 
 router.post('/register', function(req, res, next) {
     var newUser = new User(req.body);
+    newUser.phoneNum = '+1' + req.body.tel;
+    console.log("HERE??");
     newUser.generateHash(req.body.password, function(err, hash) {
         if (err) {
             return next(err);
@@ -64,6 +67,7 @@ router.post('/register', function(req, res, next) {
 });
 
 router.get('/login', helpers.loginRedirect, function(req, res, next){
+    console.log("in login");
   res.render('login', {
     user: req.user,
     message: req.flash('message')[0]

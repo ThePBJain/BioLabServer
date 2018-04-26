@@ -35,16 +35,22 @@ var User = new Schema({
     userType: {
         type: String,
         default: 'User'
+    },
+    phoneNum: {
+        type: String,
+        default: "NAN"
     }
 });
 
 User.methods.generateHash = function(password, callback) {
     bcrypt.genSalt(10, function(err, salt) {
         if (err) {
+            console.log(err);
             return next(err);
         }
         bcrypt.hash(password, salt, function(err, hash) {
             if (err) {
+                console.log(err);
                 return next(err);
             }
             return callback(err, hash);
