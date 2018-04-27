@@ -113,7 +113,8 @@ router.post('/data', function(req, res, next){
     // will only send one Temperature issue per hour, and only sends a light message when it's changed from on to off or vice versa
     // temperature bounds are 22 C and 28 C
     if( ( ((Date.now() - lastMessageTime)/1000 > 3600) && tempData.sensorType == "Temperature" &&  (tempSecond.analytics.metric > 28.0 || tempSecond.analytics.metric < 22.0))
-        || (  tempData.sensorType == "Light" &&  ( (tempSecond.analytics.metric > 1000 && wasOnAlready) || (tempSecond.analytics.metric <= 1000 && !wasOnAlready )  ))   ){
+        || (  tempData.sensorType == "Light" &&  ( (tempSecond.analytics.metric > 1000 && wasOnAlready) || (tempSecond.analytics.metric <= 1000 && !wasOnAlready )  ))
+        ||  tempData.sensorType == "Motion" ){
         if(tempData.sensorType == "Temperature"){
             lastMessageTime = Date.now();
             //message Temperature level   Moez: +17174971251‬
@@ -138,7 +139,7 @@ router.post('/data', function(req, res, next){
                 }
             });
 
-        }else{
+        }else if(tempData.sensorType == "Light"){
             //if >1000 then its off... so false
             wasOnAlready = !(tempSecond.analytics.metric > 1000);
             var lights = wasOnAlready? 'on!':'off!';
@@ -156,6 +157,31 @@ router.post('/data', function(req, res, next){
                         let userNum = data[i].phoneNum;
                         let x = client.messages.create({
                             body: 'BioLab lights are now ' + lights,
+                            to: userNum,  // Text this number
+                            from: '+15108769409' // From a valid Twilio number
+                        }).then((message) => console.dir(message));
+                    }
+
+                }
+            });
+        }else{
+            //if >0 then its Connected which means "TIB has cycled down"; == 0 means Broken and "TIB has cycled up"
+            var val = (tempSecond.analytics.metric > 0);
+            var cycle = val? 'down!':'up!';
+            //message that lights switched
+            User.find({ }, { "phoneNum": 1,"_id": 0 }, function(err, data) {
+                if (err) {
+                    res.status(500)
+                        .json({
+                            status: 'err',
+                            data: err,
+                            message: 'An error occured.'
+                        });
+                }else{
+                    for(var i=0; i < data.length; i++){
+                        let userNum = data[i].phoneNum;
+                        let x = client.messages.create({
+                            body: 'TIB has cycled ' + cycle,
                             to: userNum,  // Text this number
                             from: '+15108769409' // From a valid Twilio number
                         }).then((message) => console.dir(message));
