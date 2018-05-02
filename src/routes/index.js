@@ -82,7 +82,10 @@ router.get('/data', function(req, res){
 });
 ///*
 var wasOnAlready = true;
+var didBreak = false;
+var success = false;
 var lastMessageTime = 0;
+var lastMessageTimeCycle = 0;
 router.post('/data', function(req, res, next){
     //pass in sensor information
     //find sensor or create one
@@ -112,7 +115,7 @@ router.post('/data', function(req, res, next){
     console.log("LEVEL 2");
     // will only send one Temperature issue per hour, and only sends a light message when it's changed from on to off or vice versa
     // temperature bounds are 22 C and 28 C
-    if( ( ((Date.now() - lastMessageTime)/1000 > 3600) && tempData.sensorType == "Temperature" &&  (tempSecond.analytics.metric > 28.0 || tempSecond.analytics.metric < 22.0))
+    if( ( ((Date.now() - lastMessageTime)/1000 > 3600) && tempData.sensorType == "Temperature" &&  (tempSecond.analytics.metric > 28.5 || tempSecond.analytics.metric < 22.0))
         || (  tempData.sensorType == "Light" &&  ( (tempSecond.analytics.metric > 1000 && wasOnAlready) || (tempSecond.analytics.metric <= 1000 && !wasOnAlready )  ))
         ||  tempData.sensorType == "Motion" ){
         if(tempData.sensorType == "Temperature"){
@@ -178,19 +181,92 @@ router.post('/data', function(req, res, next){
                             message: 'An error occured.'
                         });
                 }else{
-                    for(var i=0; i < data.length; i++){
-                        let userNum = data[i].phoneNum;
+                    let userNum = data[i].phoneNum;
+                    let x = client.messages.create({
+                        body: 'TIB has cycled ' + cycle,
+                        to: '+7174971251',  // Text this number
+                        from: '+15108769409' // From a valid Twilio number
+                    }).then((message) => console.dir(message));
+
+                }
+            });
+        }
+    }
+
+    if(tempData.sensorType == "Motion"){
+        didBreak = (tempSecond.analytics.metric == 0);
+    }
+    var rightNow = new Date();
+    if( (rightNow.getUTCHours() === 0 && rightNow.getUTCMinutes() < 45 && didBreak) ||
+        (((rightNow.getUTCHours() === 1 && rightNow.getUTCMinutes() > 15) || (rightNow.getUTCHours() > 1 && (rightNow.getUTCHours() < 12 || rightNow.getUTCHours() === 12 && rightNow.getUTCMinutes() < 45))) && didBreak)
+        || ((rightNow.getUTCHours() > 13 || (rightNow.getUTCHours() === 13 && rightNow.getUTCMinutes() > 15)) && didBreak)){
+        //check to see if already sent a message within 8 hours
+        if((Date.now() - lastMessageTimeCycle)/1000 > 60*60*8) {
+            lastMessageTimeCycle = Date.now();
+            User.find({}, {"phoneNum": 1, "_id": 0}, function (err, data) {
+                if (err) {
+                    res.status(500)
+                        .json({
+                            status: 'err',
+                            data: err,
+                            message: 'An error occured.'
+                        });
+                } else {
+                    for (var i = 0; i < data.length; i++) {
+                        var userNum = data[i].phoneNum;
                         let x = client.messages.create({
-                            body: 'TIB has cycled ' + cycle,
+                            body: 'TIB is incorrectly cycling up!',
                             to: userNum,  // Text this number
                             from: '+15108769409' // From a valid Twilio number
-                        }).then((message) => console.dir(message));
+                        }).then((message) => console.dir(message.sid);
+                    )
+                        ;
                     }
 
                 }
             });
         }
     }
+
+    if ((rightNow.getUTCHours() === 0 && rightNow.getUTCMinutes() > 45) || (rightNow.getUTCHours() === 1 && rightNow.getUTCMinutes() < 15) ||
+        (rightNow.getUTCHours() === 12 && rightNow.getUTCMinutes() > 45) || (rightNow.getUTCHours() === 13 && rightNow.getUTCMinutes() < 15)){
+        if(didBreak && tempData.sensorType == "Motion"){
+            success = true;
+        }
+
+    }
+
+    if(((rightNow.getUTCHours() === 1 && rightNow.getUTCMinutes() >= 16) && (rightNow.getUTCHours() === 1 && rightNow.getUTCMinutes() <= 17)) ||
+        ((rightNow.getUTCHours() === 13 && rightNow.getUTCMinutes() >= 16) && (rightNow.getUTCHours() === 13 && rightNow.getUTCMinutes() <= 17))){
+        if( ((Date.now() - lastMessageTimeCycle)/1000 > 600)){
+            lastMessageTimeCycle = Date.now();
+            if(!success){
+                User.find({ }, { "phoneNum": 1,"_id": 0 }, function(err, data) {
+                    if (err) {
+                        res.status(500)
+                            .json({
+                                status: 'err',
+                                data: err,
+                                message: 'An error occurred.'
+                            });
+                    }else{
+                        for(var i=0; i < data.length; i++){
+                            var userNum = data[i].phoneNum;
+                            let x = client.messages.create({
+                                body: 'TIB failed to cycle!',
+                                to: userNum,  // Text this number
+                                from: '+15108769409' // From a valid Twilio number
+                            }).then((message) => console.dir(message.sid));
+                        }
+
+                    }
+                });
+            }else{
+                success = false;
+            }
+        }
+    }
+
     console.log("LEVEL 3");
 
 
