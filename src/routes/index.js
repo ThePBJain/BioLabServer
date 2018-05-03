@@ -219,6 +219,8 @@ router.post('/data', function(req, res, next){
                             to: userNum,  // Text this number
                             from: '+15108769409' // From a valid Twilio number
                         }).then((message) => console.dir(message.sid));
+                    )
+                        ;
                     }
 
                 }
