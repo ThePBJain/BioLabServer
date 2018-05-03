@@ -218,7 +218,7 @@ router.post('/data', function(req, res, next){
                             body: 'TIB is incorrectly cycling up!',
                             to: userNum,  // Text this number
                             from: '+15108769409' // From a valid Twilio number
-                        }).then((message) => console.dir(message.sid));
+                        }).then((message) => console.dir(message.sid);
                     )
                         ;
                     }
