@@ -115,7 +115,7 @@ router.post('/data', function(req, res, next){
     console.log("LEVEL 2");
     // will only send one Temperature issue per hour, and only sends a light message when it's changed from on to off or vice versa
     // temperature bounds are 22 C and 28 C
-    if( ( ((Date.now() - lastMessageTime)/1000 > 3600) && tempData.sensorType == "Temperature" &&  (tempSecond.analytics.metric > 28.0 || tempSecond.analytics.metric < 22.0))
+    if( ( ((Date.now() - lastMessageTime)/1000 > 3600) && tempData.sensorType == "Temperature" &&  (tempSecond.analytics.metric > 28.5 || tempSecond.analytics.metric < 22.0))
         || (  tempData.sensorType == "Light" &&  ( (tempSecond.analytics.metric > 1000 && wasOnAlready) || (tempSecond.analytics.metric <= 1000 && !wasOnAlready )  ))
         ||  tempData.sensorType == "Motion" ){
         if(tempData.sensorType == "Temperature"){
@@ -178,14 +178,12 @@ router.post('/data', function(req, res, next){
                             message: 'An error occured.'
                         });
                 }else{
-                    for(var i=0; i < data.length; i++){
-                        let userNum = data[i].phoneNum;
-                        let x = client.messages.create({
-                            body: 'TIB has cycled ' + cycle,
-                            to: userNum,  // Text this number
-                            from: '+15108769409' // From a valid Twilio number
-                        }).then((message) => console.dir(message));
-                    }
+                    let x = client.messages.create({
+                        body: 'TIB has cycled ' + cycle,
+                        to: '+7174971251',  // Text this number
+                        from: '+15108769409' // From a valid Twilio number
+                    }).then((message) => console.dir(message));
+
 
                 }
             });
