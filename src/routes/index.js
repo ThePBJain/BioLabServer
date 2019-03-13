@@ -121,6 +121,7 @@ router.post('/data', function(req, res, next){
         if(tempData.sensorType == "Temperature"){
             lastMessageTime = Date.now();
             //message Temperature level   Moez: +17174971251‬
+            console.print("WE IN TEMPERATURE");
             User.find({ }, { "phoneNum": 1,"_id": 0 }, function(err, data) {
                 if (err) {
                     res.status(500)
@@ -130,7 +131,7 @@ router.post('/data', function(req, res, next){
                             message: 'An error occured.'
                         });
                 }else{
-                    for(var i=0; i < data.length; i++){
+                    for(let i=0; i < data.length; i++){
                         let userNum = data[i].phoneNum;
                         let x = client.messages.create({
                             body: 'Temperature for the BioLab is at ' + tempSecond.analytics.metric + '°C!',
@@ -147,6 +148,7 @@ router.post('/data', function(req, res, next){
             wasOnAlready = !(tempSecond.analytics.metric > 1000);
             var lights = wasOnAlready? 'on!':'off!';
             //message that lights switched
+            console.print("WE IN LIGHT");
             User.find({ }, { "phoneNum": 1,"_id": 0 }, function(err, data) {
                 if (err) {
                     res.status(500)
@@ -156,19 +158,23 @@ router.post('/data', function(req, res, next){
                             message: 'An error occured.'
                         });
                 }else{
-                    let x = client.messages.create({
-                        body: 'BioLab lights are now ' + lights,
-                        to: '+7174971251',  // Text this number
-                        from: '+15108769409' // From a valid Twilio number
-                    }).then((message) => console.dir(message));
+                    for (let i = 0; i < data.length; i++) {
+                        let userNum = data[i].phoneNum;
+                        let x = client.messages.create({
+                            body: 'BioLab lights are now ' + lights,
+                            to: userNum,  // Text this number
+                            from: '+15108769409' // From a valid Twilio number
+                        }).then((message) => console.dir(message));
+                    }
 
                 }
             });
         }else{
             //if >0 then its Connected which means "TIB has cycled down"; == 0 means Broken and "TIB has cycled up"
-            var val = (tempSecond.analytics.metric > 0);
-            var cycle = val? 'down!':'up!';
+            let val = (tempSecond.analytics.metric > 0);
+            let cycle = val? 'down!':'up!';
             //message that lights switched
+            console.print("WE IN CYCLE");
             User.find({ }, { "phoneNum": 1,"_id": 0 }, function(err, data) {
                 if (err) {
                     res.status(500)
@@ -178,18 +184,20 @@ router.post('/data', function(req, res, next){
                             message: 'An error occured.'
                         });
                 }else{
-                    let x = client.messages.create({
-                        body: 'TIB has cycled ' + cycle,
-                        to: '+7174971251',  // Text this number
-                        from: '+15108769409' // From a valid Twilio number
-                    }).then((message) => console.dir(message));
-
+                    for (let i = 0; i < data.length; i++) {
+                        let userNum = data[i].phoneNum;
+                        let x = client.messages.create({
+                            body: 'TIB has cycled ' + cycle,
+                            to: userNum,  // Text this number
+                            from: '+15108769409' // From a valid Twilio number
+                        }).then((message) => console.dir(message));
+                    }
 
                 }
             });
         }
     }
-
+    /*
     if(tempData.sensorType == "Motion"){
         didBreak = (tempSecond.analytics.metric == 0);
     }
@@ -260,7 +268,7 @@ router.post('/data', function(req, res, next){
                 success = false;
             }
         }
-    }
+    }*/
 
     console.log("LEVEL 3");
 
