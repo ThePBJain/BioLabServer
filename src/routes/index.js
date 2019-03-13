@@ -115,13 +115,17 @@ router.post('/data', function(req, res, next){
     console.log("LEVEL 2");
     // will only send one Temperature issue per hour, and only sends a light message when it's changed from on to off or vice versa
     // temperature bounds are 22 C and 28 C
+    console.log(tempData.sensorType);
+    console.log(tempSecond.analytics.metric);
+    console.log(wasOnAlready);
     if( ( ((Date.now() - lastMessageTime)/1000 > 3600) && tempData.sensorType == "Temperature" &&  (tempSecond.analytics.metric > 28.5 || tempSecond.analytics.metric < 22.0))
         || (  tempData.sensorType == "Light" &&  ( (tempSecond.analytics.metric > 1000 && wasOnAlready) || (tempSecond.analytics.metric <= 1000 && !wasOnAlready )  ))
         ||  tempData.sensorType == "Motion" ){
+        console.log("We went inside");
         if(tempData.sensorType == "Temperature"){
             lastMessageTime = Date.now();
             //message Temperature level   Moez: +17174971251‬
-            console.print("WE IN TEMPERATURE");
+            console.log("WE IN TEMPERATURE");
             User.find({ }, { "phoneNum": 1,"_id": 0 }, function(err, data) {
                 if (err) {
                     res.status(500)
@@ -143,12 +147,12 @@ router.post('/data', function(req, res, next){
                 }
             });
 
-        }else if(tempData.sensorType == "Light"){
+        }else if(tempData.sensorType === "Light"){
             //if >1000 then its off... so false
             wasOnAlready = !(tempSecond.analytics.metric > 1000);
             var lights = wasOnAlready? 'on!':'off!';
             //message that lights switched
-            console.print("WE IN LIGHT");
+            console.log("WE IN LIGHT");
             User.find({ }, { "phoneNum": 1,"_id": 0 }, function(err, data) {
                 if (err) {
                     res.status(500)
@@ -174,7 +178,7 @@ router.post('/data', function(req, res, next){
             let val = (tempSecond.analytics.metric > 0);
             let cycle = val? 'down!':'up!';
             //message that lights switched
-            console.print("WE IN CYCLE");
+            console.log("WE IN CYCLE");
             User.find({ }, { "phoneNum": 1,"_id": 0 }, function(err, data) {
                 if (err) {
                     res.status(500)
